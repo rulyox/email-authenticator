@@ -1,0 +1,21 @@
+{
+  "name": "email-authenticator",
+  "version": "1.0.0",
+  "description": "Email authentication server using AWS SES.",
+  "main": "build/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/server.js"
+  },
+  "author": "rulyox",
+  "license": "MIT",
+  "dependencies": {
+    "@types/aws-sdk": "^2.7.0",
+    "@types/express": "^4.17.3",
+    "aws-sdk": "^2.643.0",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  }
+}
