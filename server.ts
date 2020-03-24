@@ -1,7 +1,12 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import api from './src/api';
+import dbManager from './src/db-manager';
 import utility from './src/utility';
+
+// database
+dbManager.openDB();
+dbManager.setupDB();
 
 // express app
 const app = express();

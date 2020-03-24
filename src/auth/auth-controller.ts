@@ -1,5 +1,7 @@
 import crypto from 'crypto';
 import AWS from 'aws-sdk';
+import dbManager from '../db-manager';
+import authSQL from './auth-sql';
 import awsConfig from '../../config/aws.json';
 import emailConfig from '../../config/email.json';
 
@@ -15,11 +17,20 @@ const checkKey = (key: string): boolean => {
 
 };
 
-const createCode = (key: string): string => {
+const createCode = (recipient: string, callback: string): Promise<{id: number, code: string}> => {
+    return new Promise(async (resolve) => {
 
-    const code = crypto.randomBytes(20).toString('hex');
-    return code;
+        const code = crypto.randomBytes(20).toString('hex');
 
+        const addQuery = await dbManager.queryRunDB(authSQL.addAuth(recipient, code, callback));
+        const addedId = addQuery.lastID;
+
+        resolve({
+            id: addedId,
+            code: code
+        });
+
+    });
 };
 
 const sendEmail = (title: string, recipient: string) => {

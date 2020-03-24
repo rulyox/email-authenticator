@@ -1,6 +1,6 @@
 import express from 'express';
 import authController from './auth-controller';
-import utility from "../utility";
+import utility from '../utility';
 
 const router = express.Router();
 
@@ -11,7 +11,7 @@ Start authentication and send email
 POST /auth/start
 
 request body json
-{key: string, title: string, recipient: string}
+{key: string, title: string, recipient: string, callback: string}
 
 response json
 {result: boolean}
@@ -21,9 +21,10 @@ router.post('/start', async (request, response) => {
     const key = request.body?.key;
     const title = request.body?.title;
     const recipient = request.body?.recipient;
+    const callback = request.body?.callback;
 
     // type check
-    if(typeof key !== 'string' || typeof title !== 'string' || typeof recipient !== 'string') {
+    if(typeof key !== 'string' || typeof title !== 'string' || typeof recipient !== 'string' || typeof callback !== 'string') {
         response.writeHead(400);
         response.end();
         return;
@@ -40,7 +41,7 @@ router.post('/start', async (request, response) => {
         return;
     }
 
-    const code = authController.createCode(key);
+    const codeResult: {id: number, code: string} = await authController.createCode(recipient, callback);
 
     authController.sendEmail(title, recipient);
 
