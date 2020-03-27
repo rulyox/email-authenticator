@@ -12,7 +12,7 @@ Start authentication and send email
 POST /auth/start
 
 request body json
-{key: string, title: string, recipient: string, callback: string}
+{key: string, title: string, email: string, callback: string}
 
 response json
 {result: boolean, code: string}
@@ -21,11 +21,11 @@ router.post('/start', async (request, response) => {
 
     const key = request.body?.key;
     const title = request.body?.title;
-    const recipient = request.body?.recipient;
+    const email = request.body?.email;
     const callback = request.body?.callback;
 
     // type check
-    if(typeof key !== 'string' || typeof title !== 'string' || typeof recipient !== 'string' || typeof callback !== 'string') {
+    if(typeof key !== 'string' || typeof title !== 'string' || typeof email !== 'string' || typeof callback !== 'string') {
         response.writeHead(400);
         response.end();
         return;
@@ -39,11 +39,11 @@ router.post('/start', async (request, response) => {
     }
 
     let result: {result: boolean, code: string};
-    utility.print(`POST /auth/start ${recipient}`);
+    utility.print(`POST /auth/start ${email}`);
 
-    const codeResult: string = await authController.createCode(recipient, callback);
+    const codeResult: string = await authController.createCode(email, callback);
 
-    authController.sendEmail(title, recipient, codeResult);
+    authController.sendEmail(title, email, codeResult);
 
     result = {
         result: true,
@@ -54,12 +54,19 @@ router.post('/start', async (request, response) => {
 
 });
 
+/*
+User should click this link to authenticate
+GET /auth/:code
+
+request param
+code : string
+*/
 router.get('/:code', async (request, response) => {
 
     const code = request.params?.code;
 
     // type check
-    if( typeof code !== 'string') {
+    if(typeof code !== 'string') {
         response.writeHead(400);
         response.end();
         return;

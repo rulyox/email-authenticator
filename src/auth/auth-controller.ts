@@ -13,12 +13,12 @@ AWS.config.update({
     region: awsConfig.region
 });
 
-const createCode = (recipient: string, callback: string): Promise<string> => {
+const createCode = (email: string, callback: string): Promise<string> => {
     return new Promise(async (resolve) => {
 
         const code = crypto.randomBytes(30).toString('hex');
 
-        const addQuery = await dbManager.queryRunDB(authSQL.addAuth(recipient, code, callback));
+        const addQuery = await dbManager.queryRunDB(authSQL.addAuth(email, code, callback));
         const addedId = addQuery.lastID;
 
         utility.print(`Added ${addedId} ${code}`);
@@ -28,26 +28,35 @@ const createCode = (recipient: string, callback: string): Promise<string> => {
     });
 };
 
-const sendEmail = (title: string, recipient: string, code: string) => {
+const sendEmail = (title: string, email: string, code: string) => {
 
     const authLink = `${serverConfig.host}/auth/${code}`;
+
+    const emailTitle = `[${title}] Authentication Email`;
+    const emailBody = `
+    Hello.<br>
+    This email was sent for the authentication of ${title}.<br>
+    Please click the link below to authenticate.<br>
+    <br>
+    ${authLink}<br>
+    `;
 
     const emailParams = {
 
         Destination: {
-            ToAddresses: [recipient]
+            ToAddresses: [email]
         },
 
         Message: {
             Body: {
                 Html: {
                     Charset: 'UTF-8',
-                    Data: `${authLink}`
+                    Data: emailBody
                 }
             },
             Subject: {
                 Charset: 'UTF-8',
-                Data: `[${title}] Authentication Email`
+                Data: emailTitle
             }
         },
 
@@ -58,8 +67,8 @@ const sendEmail = (title: string, recipient: string, code: string) => {
     new AWS.SES({apiVersion: '2010-12-01'})
         .sendEmail(emailParams)
         .promise()
-        .then(data => console.log(data.MessageId))
-        .catch(error => console.error(error, error.stack));
+        .then(data => utility.print(`Email send ${data.MessageId}`))
+        .catch(error => utility.print(`Email error ${error}`));
 
 };
 
@@ -72,9 +81,9 @@ const checkCode = (code: string): Promise<boolean> => {
 
             const selectedId: number = selectQuery[0].id;
 
-            utility.print(`Selected ${selectedId}`);
-
             await dbManager.queryAllDB(authSQL.updateAuth(selectedId));
+
+            utility.print(`Authenticated ${selectedId}`);
 
             resolve(true);
 
