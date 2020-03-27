@@ -4,6 +4,8 @@ import dbManager from '../db-manager';
 import authSQL from './auth-sql';
 import awsConfig from '../../config/aws.json';
 import emailConfig from '../../config/email.json';
+import serverConfig from '../../config/server.json';
+import utility from "../utility";
 
 AWS.config.update({
     accessKeyId: awsConfig.accessKeyId,
@@ -11,29 +13,24 @@ AWS.config.update({
     region: awsConfig.region
 });
 
-const checkKey = (key: string): boolean => {
-
-    return true;
-
-};
-
-const createCode = (recipient: string, callback: string): Promise<{id: number, code: string}> => {
+const createCode = (recipient: string, callback: string): Promise<string> => {
     return new Promise(async (resolve) => {
 
-        const code = crypto.randomBytes(20).toString('hex');
+        const code = crypto.randomBytes(30).toString('hex');
 
         const addQuery = await dbManager.queryRunDB(authSQL.addAuth(recipient, code, callback));
         const addedId = addQuery.lastID;
 
-        resolve({
-            id: addedId,
-            code: code
-        });
+        utility.print(`Added ${addedId} ${code}`);
+
+        resolve(code);
 
     });
 };
 
-const sendEmail = (title: string, recipient: string) => {
+const sendEmail = (title: string, recipient: string, code: string) => {
+
+    const authLink = `${serverConfig.host}/auth/${code}`;
 
     const emailParams = {
 
@@ -45,7 +42,7 @@ const sendEmail = (title: string, recipient: string) => {
             Body: {
                 Html: {
                     Charset: 'UTF-8',
-                    Data: 'hello world'
+                    Data: `${authLink}`
                 }
             },
             Subject: {
@@ -66,8 +63,32 @@ const sendEmail = (title: string, recipient: string) => {
 
 };
 
+const checkCode = (code: string): Promise<boolean> => {
+    return new Promise(async (resolve) => {
+
+        const selectQuery = await dbManager.queryAllDB(authSQL.selectAuth(code));
+
+        if(selectQuery.length === 1) {
+
+            const selectedId: number = selectQuery[0].id;
+
+            utility.print(`Selected ${selectedId}`);
+
+            await dbManager.queryAllDB(authSQL.updateAuth(selectedId));
+
+            resolve(true);
+
+        } else {
+
+            resolve(false);
+
+        }
+
+    });
+};
+
 export default {
-    checkKey,
     createCode,
-    sendEmail
+    sendEmail,
+    checkCode
 };

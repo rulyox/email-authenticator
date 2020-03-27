@@ -1,6 +1,7 @@
 import express from 'express';
 import authController from './auth-controller';
 import utility from '../utility';
+import serverConfig from '../../config/server.json';
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ request body json
 {key: string, title: string, recipient: string, callback: string}
 
 response json
-{result: boolean}
+{result: boolean, code: string}
 */
 router.post('/start', async (request, response) => {
 
@@ -30,26 +31,55 @@ router.post('/start', async (request, response) => {
         return;
     }
 
-    let result: {result: boolean};
-    utility.print(`POST /auth/start ${recipient}`);
-
     // key check
-    const keyResult: boolean = authController.checkKey(key);
-    if(!keyResult) {
+    if(key !== serverConfig.key) {
         response.writeHead(401);
         response.end();
         return;
     }
 
-    const codeResult: {id: number, code: string} = await authController.createCode(recipient, callback);
+    let result: {result: boolean, code: string};
+    utility.print(`POST /auth/start ${recipient}`);
 
-    authController.sendEmail(title, recipient);
+    const codeResult: string = await authController.createCode(recipient, callback);
+
+    authController.sendEmail(title, recipient, codeResult);
 
     result = {
-        result: true
+        result: true,
+        code: codeResult
     };
 
     response.json(result);
+
+});
+
+router.get('/:code', async (request, response) => {
+
+    const code = request.params?.code;
+
+    // type check
+    if( typeof code !== 'string') {
+        response.writeHead(400);
+        response.end();
+        return;
+    }
+
+    utility.print(`GET /auth ${code}`);
+
+    const authResult: boolean = await authController.checkCode(code);
+
+    if(authResult) {
+
+        response.writeHead(200);
+        response.end('Authentication Successful');
+
+    } else {
+
+        response.writeHead(200);
+        response.end('Authentication Failed');
+
+    }
 
 });
 
