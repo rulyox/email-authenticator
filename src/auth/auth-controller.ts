@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import request from 'request';
 import AWS from 'aws-sdk';
 import dbManager from '../db-manager';
 import authSQL from './auth-sql';
@@ -80,6 +81,9 @@ const checkCode = (code: string): Promise<boolean> => {
         if(selectQuery.length === 1) {
 
             const selectedId: number = selectQuery[0].id;
+            const selectedCallback: string = selectQuery[0].callback;
+
+            sendCallback(selectedCallback);
 
             await dbManager.queryAllDB(authSQL.updateAuth(selectedId));
 
@@ -96,8 +100,25 @@ const checkCode = (code: string): Promise<boolean> => {
     });
 };
 
+const sendCallback = (callback: string) => {
+
+    request({
+
+        method: 'GET',
+        url: callback
+
+    }, (error, response) => {
+
+        if(error) utility.print(error);
+        else utility.print(`Callback result ${response.body}`);
+
+    });
+
+};
+
 export default {
     createCode,
     sendEmail,
-    checkCode
+    checkCode,
+    sendCallback
 };
