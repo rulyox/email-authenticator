@@ -4,7 +4,7 @@
   "description": "Email authentication server using AWS SES.",
   "main": "build/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && copyfiles web/*.html build",
     "start": "node build/server.js"
   },
   "author": "rulyox",
@@ -22,6 +22,7 @@
     "sqlite3": "^4.1.1"
   },
   "devDependencies": {
+    "copyfiles": "^2.2.0",
     "typescript": "^3.8.3"
   }
 }

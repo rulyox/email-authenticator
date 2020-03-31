@@ -1,7 +1,18 @@
+import fs from 'fs';
+import path from 'path';
 import express from 'express';
 import authController from './auth-controller';
 import utility from '../utility';
 import serverConfig from '../../config/server.json';
+
+const templateEval = (s: string, params: object) => {
+
+    return Function(...Object.keys(params), "return " + s)
+    (...Object.values(params));
+
+};
+
+const resultHTMLPath = path.resolve(__dirname, '../../web', 'result.html');
 
 const router = express.Router();
 
@@ -74,17 +85,31 @@ router.get('/:code', async (request, response) => {
 
     utility.print(`GET /auth ${code}`);
 
-    const authResult: boolean = await authController.checkCode(code);
+    const authResult: string = await authController.checkCode(code);
 
-    if(authResult) {
+    if(authResult === 'success') {
 
-        response.writeHead(200);
-        response.end('Authentication Successful');
-
-    } else {
+        let resultHTML: string = '`' + fs.readFileSync(resultHTMLPath).toString() + '`';
+        resultHTML = templateEval(resultHTML, {result:'Authentication Successful!'});
 
         response.writeHead(200);
-        response.end('Authentication Failed');
+        response.end(resultHTML);
+
+    } else if(authResult === 'already') {
+
+        let resultHTML: string = '`' + fs.readFileSync(resultHTMLPath).toString() + '`';
+        resultHTML = templateEval(resultHTML, {result:'Already Authenticated!'});
+
+        response.writeHead(200);
+        response.end(resultHTML);
+
+    } else if(authResult === 'fail') {
+
+        let resultHTML: string = '`' + fs.readFileSync(resultHTMLPath).toString() + '`';
+        resultHTML = templateEval(resultHTML, {result:'Authentication Failed!'});
+
+        response.writeHead(200);
+        response.end(resultHTML);
 
     }
 

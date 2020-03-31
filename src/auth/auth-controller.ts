@@ -6,7 +6,7 @@ import authSQL from './auth-sql';
 import awsConfig from '../../config/aws.json';
 import emailConfig from '../../config/email.json';
 import serverConfig from '../../config/server.json';
-import utility from "../utility";
+import utility from '../utility';
 
 AWS.config.update({
     accessKeyId: awsConfig.accessKeyId,
@@ -73,27 +73,35 @@ const sendEmail = (title: string, email: string, code: string) => {
 
 };
 
-const checkCode = (code: string): Promise<boolean> => {
+const checkCode = (code: string): Promise<string> => {
     return new Promise(async (resolve) => {
 
         const selectQuery = await dbManager.queryAllDB(authSQL.selectAuth(code));
 
         if(selectQuery.length === 1) {
 
-            const selectedId: number = selectQuery[0].id;
-            const selectedCallback: string = selectQuery[0].callback;
+            if(selectQuery[0].done === 0) {
 
-            sendCallback(selectedCallback);
+                const selectedId: number = selectQuery[0].id;
+                const selectedCallback: string = selectQuery[0].callback;
 
-            await dbManager.queryAllDB(authSQL.updateAuth(selectedId));
+                sendCallback(selectedCallback);
 
-            utility.print(`Authenticated ${selectedId}`);
+                await dbManager.queryAllDB(authSQL.updateAuth(selectedId));
 
-            resolve(true);
+                utility.print(`Authenticated ${selectedId}`);
+
+                resolve('success');
+
+            } else {
+
+                resolve('already');
+
+            }
 
         } else {
 
-            resolve(false);
+            resolve('fail');
 
         }
 
