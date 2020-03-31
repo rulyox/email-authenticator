@@ -14,7 +14,7 @@ const dbFilePath = path.resolve(__dirname, dbDir, dbFile);
 
 let authDB: sqlite.Database;
 
-const openDB = () => {
+const open = () => {
 
     authDB = new sqlite.Database(dbFilePath, (error) => {
 
@@ -25,7 +25,7 @@ const openDB = () => {
 
 };
 
-const setupDB = () => {
+const setup = () => {
 
     const createUserTable = `CREATE TABLE IF NOT EXISTS \`auth\` (
         \`id\` INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,18 +39,7 @@ const setupDB = () => {
 
 };
 
-const queryRunDB = (query: string): Promise<any> => {
-    return new Promise((resolve, reject) => {
-
-        authDB.run(query, function (error) {
-            if(error) reject(error);
-            else resolve(this);
-        });
-
-    });
-};
-
-const queryAllDB = (query: string): Promise<any[]> => {
+const query = (query: string): Promise<any[]> => {
     return new Promise((resolve, reject) => {
 
         authDB.all(query, (error, rows) => {
@@ -62,8 +51,7 @@ const queryAllDB = (query: string): Promise<any[]> => {
 };
 
 export default {
-    openDB,
-    setupDB,
-    queryRunDB,
-    queryAllDB
+    open,
+    setup,
+    query
 };

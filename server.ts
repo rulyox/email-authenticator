@@ -5,8 +5,8 @@ import dbManager from './src/db-manager';
 import utility from './src/utility';
 
 // database
-dbManager.openDB();
-dbManager.setupDB();
+dbManager.open();
+dbManager.setup();
 
 // express app
 const app = express();

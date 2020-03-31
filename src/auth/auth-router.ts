@@ -17,9 +17,8 @@ const resultHTMLPath = path.resolve(__dirname, '../../web', 'result.html');
 const router = express.Router();
 
 /*
-Start authentication and send email
-- key is used to identify service
-- code is used to check user
+Start authentication and send email.
+Key is the password for using this server.
 POST /auth/start
 
 request body json
@@ -52,13 +51,14 @@ router.post('/start', async (request, response) => {
     let result: {result: boolean, code: string};
     utility.print(`POST /auth/start ${email}`);
 
-    const codeResult: string = await authController.createCode(email, callback);
+    // code is used to identify user
+    const code: string = await authController.createCode(email, callback);
 
-    authController.sendEmail(title, email, codeResult);
+    authController.sendEmail(title, email, code);
 
     result = {
         result: true,
-        code: codeResult
+        code: code
     };
 
     response.json(result);
@@ -66,7 +66,7 @@ router.post('/start', async (request, response) => {
 });
 
 /*
-User should click this link to authenticate
+User should click this link to authenticate.
 GET /auth/:code
 
 request param
@@ -87,31 +87,15 @@ router.get('/:code', async (request, response) => {
 
     const authResult: string = await authController.checkCode(code);
 
-    if(authResult === 'success') {
+    // create result html
+    let resultHTML: string = '`' + fs.readFileSync(resultHTMLPath).toString() + '`';
 
-        let resultHTML: string = '`' + fs.readFileSync(resultHTMLPath).toString() + '`';
-        resultHTML = templateEval(resultHTML, {result:'Authentication Successful!'});
+    if(authResult === 'success') resultHTML = templateEval(resultHTML, {result:'Authentication Successful!'});
+    else if(authResult === 'already') resultHTML = templateEval(resultHTML, {result:'Already Authenticated!'});
+    else if(authResult === 'fail') resultHTML = templateEval(resultHTML, {result:'Authentication Failed!'});
 
-        response.writeHead(200);
-        response.end(resultHTML);
-
-    } else if(authResult === 'already') {
-
-        let resultHTML: string = '`' + fs.readFileSync(resultHTMLPath).toString() + '`';
-        resultHTML = templateEval(resultHTML, {result:'Already Authenticated!'});
-
-        response.writeHead(200);
-        response.end(resultHTML);
-
-    } else if(authResult === 'fail') {
-
-        let resultHTML: string = '`' + fs.readFileSync(resultHTMLPath).toString() + '`';
-        resultHTML = templateEval(resultHTML, {result:'Authentication Failed!'});
-
-        response.writeHead(200);
-        response.end(resultHTML);
-
-    }
+    response.writeHead(200);
+    response.end(resultHTML);
 
 });
 

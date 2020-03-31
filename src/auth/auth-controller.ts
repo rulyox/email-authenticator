@@ -3,10 +3,10 @@ import request from 'request';
 import AWS from 'aws-sdk';
 import dbManager from '../db-manager';
 import authSQL from './auth-sql';
+import utility from '../utility';
 import awsConfig from '../../config/aws.json';
 import emailConfig from '../../config/email.json';
 import serverConfig from '../../config/server.json';
-import utility from '../utility';
 
 AWS.config.update({
     accessKeyId: awsConfig.accessKeyId,
@@ -19,10 +19,9 @@ const createCode = (email: string, callback: string): Promise<string> => {
 
         const code = crypto.randomBytes(30).toString('hex');
 
-        const addQuery = await dbManager.queryRunDB(authSQL.addAuth(email, code, callback));
-        const addedId = addQuery.lastID;
+        await dbManager.query(authSQL.add(email, code, callback));
 
-        utility.print(`Added ${addedId} ${code}`);
+        utility.print(`Started ${code}`);
 
         resolve(code);
 
@@ -68,28 +67,29 @@ const sendEmail = (title: string, email: string, code: string) => {
     new AWS.SES({apiVersion: '2010-12-01'})
         .sendEmail(emailParams)
         .promise()
-        .then(data => utility.print(`Email send ${data.MessageId}`))
-        .catch(error => utility.print(`Email error ${error}`));
+        .then(data => utility.print(`Email Sent ${data.MessageId}`))
+        .catch(error => utility.print(`Email Error ${error}`));
 
 };
 
 const checkCode = (code: string): Promise<string> => {
     return new Promise(async (resolve) => {
 
-        const selectQuery = await dbManager.queryAllDB(authSQL.selectAuth(code));
+        const selectQuery = await dbManager.query(authSQL.selectByCode(code));
 
         if(selectQuery.length === 1) {
 
             if(selectQuery[0].done === 0) {
 
-                const selectedId: number = selectQuery[0].id;
-                const selectedCallback: string = selectQuery[0].callback;
+                const id: number = selectQuery[0].id;
+                const callback: string = selectQuery[0].callback;
 
-                sendCallback(selectedCallback);
+                sendCallback(callback);
 
-                await dbManager.queryAllDB(authSQL.updateAuth(selectedId));
+                // mark done
+                await dbManager.query(authSQL.edit(id));
 
-                utility.print(`Authenticated ${selectedId}`);
+                utility.print(`Authenticated ${id}`);
 
                 resolve('success');
 
@@ -118,7 +118,7 @@ const sendCallback = (callback: string) => {
     }, (error, response) => {
 
         if(error) utility.print(error);
-        else utility.print(`Callback result ${response.body}`);
+        else utility.print(`Callback Result ${response.body}`);
 
     });
 
