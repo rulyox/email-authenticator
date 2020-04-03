@@ -15,22 +15,31 @@ AWS.config.update({
 });
 
 const createCode = (email: string, callback: string): Promise<string> => {
-    return new Promise(async (resolve) => {
+    return new Promise(async (resolve, reject) => {
 
-        const code = crypto.randomBytes(30).toString('hex');
+        try {
 
-        await dbManager.query(authSQL.add(email, code, callback));
+            // create random code
+            const code = crypto.randomBytes(30).toString('hex');
 
-        utility.print(`Started ${code}`);
+            await dbManager.query(authSQL.add(email, code, callback));
 
-        resolve(code);
+            utility.print(`Started ${code}`);
+
+            resolve(code);
+
+        } catch(error) {
+
+            reject(error);
+
+        }
 
     });
 };
 
 const sendEmail = (title: string, email: string, code: string) => {
 
-    const authLink = `${serverConfig.host}/auth/${code}`;
+    const authLink = `${serverConfig.host}:${serverConfig.port}/auth/${code}`;
 
     const emailTitle = `[${title}] Authentication Email`;
     const emailBody = `
@@ -67,41 +76,47 @@ const sendEmail = (title: string, email: string, code: string) => {
     new AWS.SES({apiVersion: '2010-12-01'})
         .sendEmail(emailParams)
         .promise()
-        .then(data => utility.print(`Email Sent ${data.MessageId}`))
-        .catch(error => utility.print(`Email Error ${error}`));
+        .then(data => utility.print(`Email Sent\n${data.MessageId}`))
+        .catch(error => utility.print(`Email Error\n${error}`));
 
 };
 
-const checkCode = (code: string): Promise<string> => {
-    return new Promise(async (resolve) => {
+/*
+Result Code
+101 : Success
+201 : Already authenticated
+202 : Wrong code
+*/
+const checkCode = (code: string): Promise<number> => {
+    return new Promise(async (resolve, reject) => {
 
-        const selectQuery = await dbManager.query(authSQL.selectByCode(code));
+        try {
 
-        if(selectQuery.length === 1) {
+            const selectQuery = await dbManager.query(authSQL.selectByCode(code));
 
-            if(selectQuery[0].done === 0) {
+            if(selectQuery.length === 1) {
 
-                const id: number = selectQuery[0].id;
-                const callback: string = selectQuery[0].callback;
+                if(selectQuery[0].done === 0) {
 
-                sendCallback(callback);
+                    const id: number = selectQuery[0].id;
+                    const callback: string = selectQuery[0].callback;
 
-                // mark done
-                await dbManager.query(authSQL.edit(id));
+                    sendCallback(callback);
 
-                utility.print(`Authenticated ${id}`);
+                    // mark code as done
+                    await dbManager.query(authSQL.edit(id));
 
-                resolve('success');
+                    utility.print(`Authenticated ${id}`);
 
-            } else {
+                    resolve(101);
 
-                resolve('already');
+                } else resolve(201); // code already done
 
-            }
+            } else resolve(202); // code does not exist
 
-        } else {
+        } catch(error) {
 
-            resolve('fail');
+            reject(error);
 
         }
 
@@ -117,8 +132,8 @@ const sendCallback = (callback: string) => {
 
     }, (error, response) => {
 
-        if(error) utility.print(error);
-        else utility.print(`Callback Result ${response.body}`);
+        if(error) utility.print(`Callback Error\n${error}`);
+        else utility.print(`Callback Result\n${response.body}`);
 
     });
 

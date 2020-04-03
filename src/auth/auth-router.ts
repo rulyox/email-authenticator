@@ -5,29 +5,21 @@ import authController from './auth-controller';
 import utility from '../utility';
 import serverConfig from '../../config/server.json';
 
-const templateEval = (s: string, params: object) => {
-
-    return Function(...Object.keys(params), "return " + s)
-    (...Object.values(params));
-
-};
-
-const resultHTMLPath = path.resolve(__dirname, '../../web', 'result.html');
-
 const router = express.Router();
 
 /*
-Start authentication and send email.
-Key is the password for using this server.
 POST /auth/start
 
-request body json
+Start authentication and send email.
+Key is the password for using this server.
+
+Request Body JSON
 {key: string, title: string, email: string, callback: string}
 
-response json
-{result: boolean, code: string}
+Response JSON
+{code: string}
 */
-router.post('/start', async (request, response) => {
+router.post('/start', async (request, response, next) => {
 
     const key = request.body?.key;
     const title = request.body?.title;
@@ -36,66 +28,76 @@ router.post('/start', async (request, response) => {
 
     // type check
     if(typeof key !== 'string' || typeof title !== 'string' || typeof email !== 'string' || typeof callback !== 'string') {
-        response.writeHead(400);
-        response.end();
+        response.status(400).end();
         return;
     }
 
     // key check
     if(key !== serverConfig.key) {
-        response.writeHead(401);
-        response.end();
+        response.status(401).end();
         return;
     }
 
-    let result: {result: boolean, code: string};
     utility.print(`POST /auth/start ${email}`);
 
-    // code is used to identify user
-    const code: string = await authController.createCode(email, callback);
+    try {
 
-    authController.sendEmail(title, email, code);
+        // code is used to identify user
+        const code: string = await authController.createCode(email, callback);
 
-    result = {
-        result: true,
-        code: code
-    };
+        authController.sendEmail(title, email, code);
 
-    response.json(result);
+        response.json({ code: code });
+
+    } catch(error) {
+
+        // error handler
+        next(new Error(`POST /auth/start\n${error}`));
+
+    }
 
 });
 
 /*
-User should click this link to authenticate.
 GET /auth/:code
 
-request param
+User should click this link to authenticate.
+
+Request Param
 code : string
 */
-router.get('/:code', async (request, response) => {
+router.get('/:code', async (request, response, next) => {
 
     const code = request.params?.code;
 
     // type check
     if(typeof code !== 'string') {
-        response.writeHead(400);
-        response.end();
+        response.status(400).end();
         return;
     }
 
     utility.print(`GET /auth ${code}`);
 
-    const authResult: string = await authController.checkCode(code);
+    try {
 
-    // create result html
-    let resultHTML: string = '`' + fs.readFileSync(resultHTMLPath).toString() + '`';
+        const authResult: number = await authController.checkCode(code);
 
-    if(authResult === 'success') resultHTML = templateEval(resultHTML, {result:'Authentication Successful!'});
-    else if(authResult === 'already') resultHTML = templateEval(resultHTML, {result:'Already Authenticated!'});
-    else if(authResult === 'fail') resultHTML = templateEval(resultHTML, {result:'Authentication Failed!'});
+        // create result html
+        const resultHTMLPath = path.resolve(__dirname, '../../web', 'result.html');
+        let resultHTML: string = '`' + fs.readFileSync(resultHTMLPath).toString() + '`';
 
-    response.writeHead(200);
-    response.end(resultHTML);
+        if(authResult === 101) resultHTML = utility.templateEval(resultHTML, {result:'Authentication Successful!'});
+        else if(authResult === 201) resultHTML = utility.templateEval(resultHTML, {result:'Already Authenticated!'});
+        else if(authResult === 202) resultHTML = utility.templateEval(resultHTML, {result:'Authentication Failed!'});
+
+        response.status(200).end(resultHTML);
+
+    } catch(error) {
+
+        // error handler
+        next(new Error(`GET /auth\n${error}`));
+
+    }
 
 });
 

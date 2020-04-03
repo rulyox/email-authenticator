@@ -30,7 +30,6 @@ Key is the password for using this server.
 * Response JSON
 ```json
 {
-  "result": "boolean",
   "code": "string"
 }
 ```

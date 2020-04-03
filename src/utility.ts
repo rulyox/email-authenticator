@@ -1,3 +1,5 @@
+import express from 'express';
+
 const getTime = (): string => {
 
     const time = new Date();
@@ -21,7 +23,24 @@ const print = (log: string): void => {
 
 };
 
+const errorHandler = (error: Error, request: express.Request, response: express.Response, next: express.NextFunction) => {
+
+    print(`Error\n${error}`);
+
+    response.status(500).end();
+
+};
+
+const templateEval = (s: string, params: object) => {
+
+    return Function(...Object.keys(params), "return " + s)
+    (...Object.values(params));
+
+};
+
 export default {
     getTime,
-    print
+    print,
+    errorHandler,
+    templateEval
 };

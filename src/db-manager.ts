@@ -3,31 +3,31 @@ import path from 'path';
 import sqlite from 'sqlite3';
 import utility from './utility';
 
-// create dir if not exists
-const dbDir = '../data';
-const dbDirPath = path.resolve(__dirname, dbDir);
-
-if(!fs.existsSync(dbDirPath)) fs.mkdirSync(dbDirPath);
-
-const dbFile = 'auth.db';
-const dbFilePath = path.resolve(__dirname, dbDir, dbFile);
-
-let authDB: sqlite.Database;
+let db: sqlite.Database;
 
 const open = () => {
 
-    authDB = new sqlite.Database(dbFilePath, (error) => {
+    // create dir if not exists
+    const dbDir = path.resolve(__dirname, '../data');
+
+    if(!fs.existsSync(dbDir)) fs.mkdirSync(dbDir);
+
+    const dbFile = path.resolve(__dirname, '../data', 'auth.db');
+
+    db = new sqlite.Database(dbFile, (error) => {
 
         if(error) utility.print(error.toString());
         else utility.print('DB Opened');
+
+        createTable();
 
     });
 
 };
 
-const setup = () => {
+const createTable = () => {
 
-    const createUserTable = `CREATE TABLE IF NOT EXISTS \`auth\` (
+    const createAuthTable = `CREATE TABLE IF NOT EXISTS \`auth\` (
         \`id\` INTEGER PRIMARY KEY AUTOINCREMENT,
         \`email\` TEXT NOT NULL,
         \`code\` TEXT NOT NULL,
@@ -35,14 +35,14 @@ const setup = () => {
         \`done\` INTEGER NOT NULL
     );`;
 
-    authDB.run(createUserTable);
+    db.run(createAuthTable);
 
 };
 
 const query = (query: string): Promise<any[]> => {
     return new Promise((resolve, reject) => {
 
-        authDB.all(query, (error, rows) => {
+        db.all(query, (error, rows) => {
             if(error) reject(error);
             else resolve(rows);
         });
@@ -52,6 +52,5 @@ const query = (query: string): Promise<any[]> => {
 
 export default {
     open,
-    setup,
     query
 };
