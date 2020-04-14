@@ -5,7 +5,6 @@ import dbManager from '../db-manager';
 import authSQL from './auth-sql';
 import utility from '../utility';
 import awsConfig from '../../config/aws.json';
-import emailConfig from '../../config/email.json';
 import serverConfig from '../../config/server.json';
 
 AWS.config.update({
@@ -69,7 +68,7 @@ const sendEmail = (title: string, email: string, code: string) => {
             }
         },
 
-        Source: emailConfig.sender // "anything@domain" or "email address" in SES Identity Management
+        Source: awsConfig.sender // "anything@domain" or "email address" in SES Identity Management
 
     };
 

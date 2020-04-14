@@ -2,14 +2,11 @@
 
 Email authentication server using AWS SES.
 
-
 ## Web API
 
 Uses REST API.
 
-
 ### /auth
-
 
 #### POST /auth/start
 
@@ -34,7 +31,6 @@ Key is the password for using this server.
 }
 ```
 
-
 #### GET /auth/:code
 
 User should click this link to authenticate.
@@ -42,4 +38,25 @@ User should click this link to authenticate.
 * Request Param
 ```
 code : string
+```
+
+## Configuration
+
+### server.json
+```json
+{
+  "host": "http://localhost",
+  "port": 8080,
+  "key": "password"
+}
+```
+
+### aws.json
+```json
+{
+  "accessKeyId": "IAM access key id",
+  "secretAccessKey": "IAM secret access key",
+  "region": "SES region",
+  "sender": "SES email address"
+}
 ```
