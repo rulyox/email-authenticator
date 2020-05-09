@@ -1,4 +1,4 @@
-import express from 'express';
+import request from 'request';
 
 const getTime = (): string => {
 
@@ -23,15 +23,23 @@ const print = (log: string): void => {
 
 };
 
-const errorHandler = (error: Error, request: express.Request, response: express.Response, next: express.NextFunction) => {
+const requestGet = (callback: string) => {
 
-    print(`Error\n${error}`);
+    request({
 
-    response.status(500).end();
+        method: 'GET',
+        url: callback
+
+    }, (error, response) => {
+
+        if(error) print(`Request Error\n${error}`);
+        else print(`Request Result\n${response.body}`);
+
+    });
 
 };
 
-const templateEval = (s: string, params: object) => {
+const evalTemplate = (s: string, params: object) => {
 
     return Function(...Object.keys(params), "return " + s)
     (...Object.values(params));
@@ -41,6 +49,6 @@ const templateEval = (s: string, params: object) => {
 export default {
     getTime,
     print,
-    errorHandler,
-    templateEval
+    requestGet,
+    evalTemplate
 };
