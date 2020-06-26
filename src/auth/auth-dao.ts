@@ -1,9 +1,9 @@
 import crypto from 'crypto';
-import dbManager from '../db-manager';
-import authSQL from './auth-sql';
-import utility from '../utility';
+import * as DB from '../db-manager';
+import * as authSQL from './auth-sql';
+import * as utility from '../utility';
 
-const createCode = (email: string, callback: string): Promise<string> => {
+export const createCode = (email: string, callback: string): Promise<string> => {
     return new Promise(async (resolve, reject) => {
 
         try {
@@ -11,7 +11,7 @@ const createCode = (email: string, callback: string): Promise<string> => {
             // create random code
             const code = crypto.randomBytes(30).toString('hex');
 
-            await dbManager.query(authSQL.add(email, code, callback));
+            await DB.query(authSQL.add(email, code, callback));
 
             utility.print(`Started ${code}`);
 
@@ -32,12 +32,12 @@ Result Code
 201 : Already authenticated
 202 : Wrong code
 */
-const checkCode = (code: string): Promise<number> => {
+export const checkCode = (code: string): Promise<number> => {
     return new Promise(async (resolve, reject) => {
 
         try {
 
-            const selectQuery = await dbManager.query(authSQL.selectByCode(code));
+            const selectQuery = await DB.query(authSQL.selectByCode(code));
 
             if(selectQuery.length === 1) {
 
@@ -50,7 +50,7 @@ const checkCode = (code: string): Promise<number> => {
                     utility.requestGet(callback);
 
                     // mark code as done
-                    await dbManager.query(authSQL.edit(id));
+                    await DB.query(authSQL.edit(id));
 
                     utility.print(`Authenticated ${id}`);
 
@@ -67,9 +67,4 @@ const checkCode = (code: string): Promise<number> => {
         }
 
     });
-};
-
-export default {
-    createCode,
-    checkCode
 };

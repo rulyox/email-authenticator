@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import utility from '../utility';
+import * as utility from '../utility';
 import awsConfig from '../../config/aws.json';
 import serverConfig from '../../config/server.json';
 
@@ -9,7 +9,7 @@ AWS.config.update({
     region: awsConfig.region
 });
 
-const sendEmail = (title: string, email: string, code: string) => {
+export const sendEmail = (title: string, email: string, code: string) => {
 
     const authLink = `${serverConfig.host}:${serverConfig.port}/auth/${code}`;
 
@@ -51,8 +51,4 @@ const sendEmail = (title: string, email: string, code: string) => {
         .then(data => utility.print(`Email Sent\n${data.MessageId}`))
         .catch(error => utility.print(`Email Error\n${error}`));
 
-};
-
-export default {
-    sendEmail
 };

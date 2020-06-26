@@ -1,9 +1,9 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import authDAO from './auth-dao';
-import awsController from '../aws/aws-controller';
-import utility from '../utility';
+import * as authDAO from './auth-dao';
+import * as awsController from '../aws/aws-controller';
+import * as utility from '../utility';
 import serverConfig from '../../config/server.json';
 
 /*
@@ -18,7 +18,7 @@ Request Body JSON
 Response JSON
 {code: string}
 */
-const postStart = async (request: express.Request, response: express.Response, next: express.NextFunction) => {
+export const postStart = async (request: express.Request, response: express.Response, next: express.NextFunction) => {
 
     const key = request.body.key;
     const title = request.body.title;
@@ -60,7 +60,7 @@ User should click this link to authenticate.
 Request Param
 code : string
 */
-const get = async (request: express.Request, response: express.Response, next: express.NextFunction) => {
+export const get = async (request: express.Request, response: express.Response, next: express.NextFunction) => {
 
     const code = request.params.code;
 
@@ -88,9 +88,4 @@ const get = async (request: express.Request, response: express.Response, next: e
 
     } catch(error) { next(error); }
 
-};
-
-export default {
-    postStart,
-    get
 };

@@ -1,12 +1,12 @@
 import express from 'express';
-import authFunction from './auth-function';
+import * as authController from './auth-controller';
 
 const router = express.Router();
 
 // Start authentication and send email.
-router.post('/start', authFunction.postStart);
+router.post('/start', authController.postStart);
 
 // User should click this link to authenticate.
-router.get('/:code', authFunction.get);
+router.get('/:code', authController.get);
 
 export default router;

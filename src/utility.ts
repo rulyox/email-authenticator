@@ -1,6 +1,6 @@
 import request from 'request';
 
-const getTime = (): string => {
+export const getTime = (): string => {
 
     const time = new Date();
 
@@ -17,13 +17,13 @@ const getTime = (): string => {
 
 };
 
-const print = (log: string): void => {
+export const print = (log: string): void => {
 
     console.log(`${getTime()}| ${log}`);
 
 };
 
-const requestGet = (callback: string) => {
+export const requestGet = (callback: string) => {
 
     request({
 
@@ -39,16 +39,9 @@ const requestGet = (callback: string) => {
 
 };
 
-const evalTemplate = (s: string, params: object) => {
+export const evalTemplate = (s: string, params: object) => {
 
     return Function(...Object.keys(params), "return " + s)
     (...Object.values(params));
 
-};
-
-export default {
-    getTime,
-    print,
-    requestGet,
-    evalTemplate
 };

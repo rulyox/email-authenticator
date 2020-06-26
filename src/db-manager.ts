@@ -1,11 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import sqlite from 'sqlite3';
-import utility from './utility';
+import * as utility from './utility';
 
 let db: sqlite.Database;
 
-const open = () => {
+export const open = () => {
 
     // create dir if not exists
     const dbDir = path.resolve(__dirname, '../data');
@@ -39,7 +39,7 @@ const createTable = () => {
 
 };
 
-const query = (query: string): Promise<any[]> => {
+export const query = (query: string): Promise<any[]> => {
     return new Promise((resolve, reject) => {
 
         db.all(query, (error, rows) => {
@@ -48,9 +48,4 @@ const query = (query: string): Promise<any[]> => {
         });
 
     });
-};
-
-export default {
-    open,
-    query
 };
