@@ -2,6 +2,10 @@
 
 Email authentication server using AWS SES.
 
+## Diagram
+
+![diagram](./diagram.png)
+
 ## Web API
 
 Uses REST API.
